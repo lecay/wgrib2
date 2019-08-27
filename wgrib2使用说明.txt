@@ -1,0 +1,55 @@
+wgrib2 与 wgrib 的区别
+       wgrib                             wgrib2
+
+       -d all                            (no option needed)
+       -d N                              -d N or -d N.M (for grib2 submessages)
+       -bin -o FILE.BIN                  -bin FILE.BIN
+       -text -o FILE.TXT                 -text FILE.TXT
+       -ieee -o FILE.BIN                 -ieee FILE.BIN
+       -grib -o FILE.GRIB                -grib FILE.GRIB
+       -nh                               -no_header
+       -h                                -header
+       -verf (sets verf time flag)       -verf (write inventory with verf time)
+       -s -verf                          -verf
+       -PDS/-PDS10                       n/a, use -get_bytes
+       -GDS/-GDS10                       n/a, use -get_bytes
+       -ncep_opn/-ncep_rean              not needed
+       -4yr                              not needed, -4yr is always set
+       -ncep_ens                         n/a, not needed
+       -p                                n/a
+       -dwdgrib                          n/a, not needed
+       -H                                n/a
+       -o                                not needed, syntax change
+       -----                             -order ???? (grids are converted to we:sn order by default)
+                                         use -order we:ns for GFS, nothing for NAM
+
+
+Changed inventory format, different searches
+The wgrib2 inventory has changed. The various grep/egreps will have to be changed to see if they are compatible with new inventory format
+
+works:
+            wgrib  FILE | grep ":HGT:" | wgrib -i  FILE -bin -o FILE.BIN
+            wgrib2 FILE | grep ":HGT:" | wgrib2 -i FILE -bin FILE.BIN
+            wgrib2 FILE -bin FILE.BIN -match ":HGT:"
+
+works:
+            wgrib -4yr FILE | grep ":d=2006081712:" | wgrib -i  FILE -bin -o FILE.BIN
+            wgrib2 FILE | grep ":d=2006081712:" | wgrib2 -i  FILE -bin -o FILE.BIN
+            wgrib2 -match ":d=2006081712:" FILE -bin -o FILE.BIN
+
+wgrib2 uses a 4 digit year code.  Scripts using 2 digit years need to modified.
+
+convert:
+            wgrib  FILE | grep ":d=06081712:" | wgrib -i  FILE -bin -o FILE.BIN
+            wgrib2 FILE | grep ":d=2006081712:" | wgrib2 -i  FILE -bin -o FILE.BIN
+            wgrib2 -match ":d=2006081712:" FILE -bin FILE.BIN
+
+wgrib2 doesn't print out kdps5 .. kpds7 which are not applicable to grib2.
+
+convert:
+            wgrib  FILE | grep "kpds5=7:kpds6=100:kpds7=500:" | wgrib -i  FILE -bin -o FILE.BIN
+            wgrib2 -match ":HGT:" -match ":500 mb:" -bin FILE.BIN FILE
+
+            Note: kpds5/6/7 are table dependent so using HGT/500 mb was more reliable.
+
+

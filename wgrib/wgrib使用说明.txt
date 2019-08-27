@@ -1,0 +1,284 @@
+直接输入wgrib显示的是一个简短的说明
+命令格式是 wgrib [grib file] [options]
+
+[grib file]就是grib数据所在的路径
+[options]的说明见下
+
+（1）仅仅查看数据内容的使用
+      
+      <1>目录输出样式的选项（Inventory/diagnostic output selection）
+        -s/-v/-V  分别是简短目录/详细目录/非常详细（不是目录了，应该算是数据描
+述）
+ 缺省  标准目录
+
+      <2>目录输出内容的选项（Options for inventory/diagnostic output）
+        -PDS/-PDS10/-GDS/-GDS10      print PDS/GDS in hex/dec
+        -verf                        print forecast verification time
+        -4yr/-ncep_opn/-ncep_rean    see documentation
+      *上面这个我自己还不是特别的清楚
+
+（2）下面的选项是提取和输出数据时需要的
+
+      <3>解码的选项（Decoding Grib selection）
+        -d [record number]  选择所提取数据的记录号
+        -p [byte position]  数据在文件中的位置（第几个字节的位置） 
+        -i                  说明提取数据是按照目录规定的进行（一般都要写的）
+
+        缺省（不写）    不进行解码，只是输出上面（1）中的目录（这个要特别的注意
+，因此最好先把-i写好）            
+      
+      <4>解码结果的选项（Options for decoding Grib）
+        -text/-ieee/-bin/-grib  指输出文件的数据格式
+        -h/-nh                  是否要加入头说明headers (default)/no headers（
+缺省是用头说明，一般要写-nh）
+        -H                      dump will include PDS and GDS (-bin/-ieee only
+)
+
+        输出文件的说明
+        -append                 在输出文件中追加，而不是覆盖
+        -o [file]               output file name, 'dump' is default
+
+********************************
+其中<1>,<2>中具体各个术语的介绍详见wgrib的说明文档
+             *** Standard Inventory ***
+
+    WGRIB's first duty is create an inventory.  This inventory
+also serves as an index file.  Using the test file land.grb you
+should be able to enter:
+
+% wgrib land.grb
+Using NCEP reanalysis table, see -ncep_opn, -ncep_rean options
+1:0:d=87010100:LAND:kpds5=81:kpds6=1:kpds7=0:TR=0:P1=0:P2=0:TimeU=1:sfc:anl:NA
+ve=1
+
+The first line indicates that wgrib couldn't figure out whether to use
+the reanalysis or operational grib tables.  Since land.grb is from
+reanalysis, we should use the reanalysis tables.  Trying again, we get
+
+% wgrib land.grb -ncep_rean
+1:0:d=87010100:LAND:kpds5=81:kpds6=1:kpds7=0:TR=0:P1=0:P2=0:TimeU=1:sfc:anl:NA
+ve=1
+
+   The inventory consists of several fields separated by colons. The contents
+
+of the fields are:
+
+   1. Record number
+   2. Position in bytes
+   3. Date (YYMMDDHH).
+   4. Parameter name (LAND=land/sea mask)
+   5. Indicator of parameter and units (grib PDS octet 9)
+   6. Type of level/layer (grib PDS octet 10)
+   7. Height, pressure, etc (grib PDS octets 11-12)
+   8. Time Range (grib PDS octet 21)
+   9. Period of time 1, (grib PDS octet 19)
+  10. Period of time 2, (grib PDS octet 20)
+  11. Forecast time unit (grib PDS octet 18)
+  12. level
+  13. anl=analysis, fcst=forecast
+  14. NAve (number of grids used to make average)
+
+
+         *** Short Inventory ***
+
+    The short inventory can be obtained using the -s option.  This
+inventory is easier to read the the previous inventory and can also
+be used as an index file.
+
+%wgrib -s land.grb -ncep_rean
+1:0:d=87010100:LAND:sfc:anl:NAve=1 
+
+   1. Record number
+   2. Position in bytes
+   3. Date (YYMMDDHH).
+   4. Parameter name (LAND=land/sea mask)
+   6. Type of level/layer (grib PDS octet 10)
+   7. Forecasts, analysis, etc
+   8. For an average, the number of fields averaged together
+
+
+         *** Verbose Inventory ***
+
+    The small verbose inventory can be obtained using the -v option.  
+This inventory can be used as an index file.
+
+% wgrib -v land.grb -ncep_rean
+1:0:D=1987010100:LAND:kpds=81,1,0:sfc:anl:"Land-sea mask [1=land; 0=sea]
+
+   1. Record number
+   2. Position in bytes
+   3. Date (YYYYMMDDHH).
+   4. Parameter name (LAND=land/sea mask)
+   5. KPDS5, KPDS6, KDPS7 (PDS Octets 9, 10, 11-12)
+   6. Type of level/layer (grib PDS octet 10)
+   7. Forecasts, analysis, etc
+   8. Description of parameter type
+
+
+         *** Verbose Description ***
+
+    The fourth type of file description can not be used as an index file.  
+However, it is more human readable.  It gives you information that is not 
+normally available such as grid dimensions.  Using the test file land.grb, 
+you should be able to enter:
+
+%wgrib land.grb -V -ncep_rean
+
+rec 1:0:date 1987010100 LAND kpds5=81 kpds6=1 kpds7=0 levels=(0,0) grid=255 sf
+c anl:
+  LAND=Land-sea mask [1=land; 0=sea]
+  timerange 0 P1 0 P2 0 TimeU 1  nx 192 ny 94 GDS grid 4 num_in_ave 1 missing 
+0
+  center 7 subcenter 0 process 80 Table 2
+  gaussian: lat  88.542000 to -88.542000
+            long 0.000000 to -1.875000 by 1.875000, (192 x 94) scan 0 bdsgrid 
+1
+  min/max data 0 1  num bits 4  BDS_Ref 0  DecScale 1 BinScale 0
+
+    The first line states
+        the record 1 starts at byte position 0
+        the initial date is January 1, 1987 at 00Z
+        the parameter is "LAND" (numeric code 81, PDS octet 9)
+        with a level type 1 (kdps6=1, PDS octet 10)
+        and value 0 (PDS octets 11-12)
+        or levels(0,0) (PDS octet 11, PDS octet 12)
+        with a user defined grid (grid=255)
+        and it is a surface analysis
+
+   The second line is a further description of the parameter type
+
+   The third line describes
+        timerange (PDS octet 21)
+        P1 (PDS octet 19)
+        P2 (PDS octet 20)
+        TimeU (PDS octet 14)
+        nx ny  grid size as used by wgrib
+        GDS grid (GDS octet 6)
+        num_in_ave (PDS octet 22-23)
+        number missing from average (PDS octet 24)
+
+   The fourth line describes
+        center (PDS octet 5)
+        subcenter (PDS octet 26)
+        process (PDS octet 6)
+        parameter table version (PDS octet 4)
+
+   The fifth and sixth lines describe the grid type
+
+   The last line describes
+        minimum and maximum values of the data
+        the number of bits used to store the data
+        the minimum value
+        the decimal and binary scaling used
+
+
+Most of the information within this description will only make sense if
+you have a copy of the GRIB definition as reference.
+
+If you want to determine the contents of record N, try the command:
+
+    %wgrib land.grib -V -d N
+
+This command also writes a binary dump of the record but it's quick.
+If you don't want a binary dump, try (on a UNIX machine),
+
+    %wgrib land.grib -V -d N -o /dev/null
+**********************************************************************
+
+具体提取某些具有特征的数据（某个变量或是某个等压面）的方法
+
+主要是三种：（in.grib作为原文件，out.grib作为转化文件）
+
+（1）使用数据的记录号
+  wgrib data.grib -d 1        
+记录号是标准目录的第一项，直接输入wgrib data.grib可以查看
+
+（2）使用数据的字节位置
+  wgrib data.grib -p 0
+字节位置是标准目录的第二项，方法和第一种是一样的
+
+（3）查找数据目录的匹配字符串
+
+linux、unix下的
+  wgrib data.grib | grep ":UGRD:" | wgrib data.grib -i -o out.grib
+
+windows、dos下的
+  wgrib data.grib | find ":UGRD:" | wgrib data.grib -i -o out.grib
+
+我自己使用的是windows，所以没有试过unix下的那个
+
+原理很简单，
+第一个命令列出了数据的目录，
+第二个命令查找和你需要数据的关键词一致的那些数据，
+第三个命令来转化输出
+
+常用就是变量的选择和等压面的选择，在find 后面写 ":UGRD:"或者"1000 mb"、":HGT:5
+00 mb:"（其实就是目录中的一些字符串）
+理论上还可以选择其它的一些关键词，我自己没有试过。
+感觉时间和区域的选择也是要用到的，以后可以拿来试试，不过应该把第一个命令改成 w
+grib data.grib -V
+
+
+***********************************************
+
+下面是输出数据格式的说明 FORMATS.TXT.
+
+                     *** Some Output Formats ***
+
+                    Binary with a f77-style header
+
+Suppose you wish to convert all the 500 mb heights (HGT in NCEP files) to 
+binary with a header.  The following line would convert "infile" to "outfile".
+
+
+  % wgrib -s infile | grep ":HGT:500 mb:" | wgrib -i infile -o outfile
+
+The "outfile" is often compatible with the fortran compiler.
+
+                        Binary with no header
+
+Suppose you wish to convert all the 500 mb heights (HGT) to binary
+with a NO header.  The following line would convert "infile" to "outfile".
+
+  % wgrib -s infile | grep ":HGT:500 mb:" | wgrib -i -nh infile -o outfile
+
+The "outfile" is often compatible with fortran direct-access I/O.
+
+                                 Text
+
+Converting a grib file into a text file is slow (reading and writing),
+takes up much more disk space and can have less precision.  Nevertheless
+it has its uses.
+
+  % wgrib -s infile | grep ":HGT:500 mb:" | wgrib -i -text infile -o outfile 
+
+
+                                  IEEE
+
+Most workstations computers use big-endian IEEE as their binary format.
+For these machines, one should not use the -ieee option as it is slower
+and could lose some precision.  However, the following line will create
+a big-endian IEEE with f77-style headers.
+
+  % wgrib -s infile | grep ":HGT:500 mb:" | wgrib -i -ieee infile -o outfile 
+
+
+Without headers, one would use
+
+  % wgrib -s infile | grep ":HGT:500 mb:" | wgrib -i -nh -ieee infile -o outfi
+le 
+
+                                  GRIB
+
+Suppose you have a large file with every variable imaginable.  But you
+are a simple person with limited means.  You only want the 500 mb heights
+and you have limited disk space.  The following will extract the 
+500 mb heights as a grib file.  
+
+  % wgrib -s infile | grep ":HGT:500 mb:" | wgrib -i -grib infile -o outfile 
+
+
+********************************************************
+That is the end!
+Good good study ,day day up!!!
+
